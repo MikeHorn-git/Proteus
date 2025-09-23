@@ -1,0 +1,2 @@
+.envrc linguist-detectable=false
+vmlinux/** linguist-vendored
