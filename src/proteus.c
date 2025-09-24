@@ -18,9 +18,7 @@ static struct env {
 
 const char *argp_program_version = "proteus 0.0";
 const char *argp_program_bug_address = "<github@MikeHorn-git>";
-const char argp_program_doc[] = "eBPF process injection\n"
-				"\n"
-				"USAGE: ./proteus -p [-t]\n";
+const char argp_program_doc[] = "eBPF process injection\n";
 
 static const struct argp_option opts[] = {
 	{ "target-ppid", 'p', "PID", 0, "PID target." },

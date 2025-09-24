@@ -18,18 +18,29 @@
   # https://devenv.sh/languages/
   languages.c.enable = true;
 
-  # https://devenv.sh/tasks/
-  tasks = {
-    "lint:run".exec = ''
+  # https://devenv.sh/scripts/
+  scripts = {
+    build.exec = "make";
+    clean.exec = "make clean";
+    lint.exec = ''
       checkmake src/Makefile
       git ls-files --cached --others --exclude-standard '*.c' '*.h' | xargs clang-format -i
       mdformat README.md
       nixfmt devenv.nix'';
   };
 
+  # https://devenv.sh/basics/
+  enterShell = ''
+    echo "Available commands:"
+    echo " - build        : Make"
+    echo " - clean        : Make clean"
+    echo " - lint         : Lint the all the repository"
+  '';
+
+  # https://devenv.sh/tests/
   enterTest = ''
-    make
-    make clean
+    build
+    clean
   '';
 
   # https://devenv.sh/git-hooks/

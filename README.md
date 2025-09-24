@@ -13,14 +13,13 @@
 
 - Clang
 - Llvm
-- Bpftool
-- Libbpf
 
 ## Installation
 
 ```bash
 git clone https://github.com/MikeHorn-git/Proteus --recursive
 git submodule update --init --recursive
+make
 ```
 
 ## Usage
@@ -28,8 +27,6 @@ git submodule update --init --recursive
 ```bash
 Usage: proteus [OPTION...]
 eBPF process injection
-
-USAGE: ./proteus -p [-t]
 
   -p, --target-ppid=PID      PID target.
   -t, --target-ppid=PPID     Optional Parent PID target.
