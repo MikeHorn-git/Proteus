@@ -1,7 +1,8 @@
-#ifndef __LOGS_H
-#define __LOGS_H
+#ifndef __USER_LOGS_H
+#define __USER_LOGS_H
 
-// Log userland
+#include "proteus.h"
+
 int ring_buffer(long ret, int pid)
 {
 	struct event *e;
@@ -16,4 +17,4 @@ int ring_buffer(long ret, int pid)
 	return 0;
 }
 
-#endif /* __LOGS_H */
+#endif /* __USER_LOGS_H_ */

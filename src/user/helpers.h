@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /* https://github.com/pathtofile/bad-bpf/blob/main/src/common_um.h */
-#ifndef __UHELPERS_H
-#define __UHELPERS_H
+#ifndef __USER_HELPERS_H_
+#define __USER_HELPERS_H_
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -16,35 +16,38 @@ struct env env;
 
 static volatile sig_atomic_t exiting;
 
-void ubpf_sigint(int signo)
+void sigint(int signo)
 {
 	exiting = 1;
 }
 
-static bool ubpf_sighandler()
+static bool sighandler()
 {
 	// Add handlers for SIGINT and SIGTERM so we shutdown cleanly
-	__sighandler_t sighandler = signal(SIGINT, ubpf_sigint);
+	__sighandler_t sighandler = signal(SIGINT, sigint);
 	if (sighandler == SIG_ERR) {
-		fprintf(stderr, "can't set signal handler: %s\n", strerror(errno));
+		fprintf(stderr, "can't set signal handler: %s\n",
+			strerror(errno));
 		return false;
 	}
-	sighandler = signal(SIGTERM, ubpf_sigint);
+	sighandler = signal(SIGTERM, sigint);
 	if (sighandler == SIG_ERR) {
-		fprintf(stderr, "can't set signal handler: %s\n", strerror(errno));
+		fprintf(stderr, "can't set signal handler: %s\n",
+			strerror(errno));
 		return false;
 	}
 	return true;
 }
 
-static int ubpf_print(enum libbpf_print_level level, const char *format, va_list args)
+static int print(enum libbpf_print_level level, const char *format,
+		 va_list args)
 {
 	if (level == LIBBPF_DEBUG && !env.verbose)
 		return 0;
 	return vfprintf(stderr, format, args);
 }
 
-static bool ubpf_rlimit(void)
+static bool rlimit(void)
 {
 	struct rlimit rlim_new = {
 		.rlim_cur = RLIM_INFINITY,
@@ -52,7 +55,8 @@ static bool ubpf_rlimit(void)
 	};
 
 	if (setrlimit(RLIMIT_MEMLOCK, &rlim_new)) {
-		fprintf(stderr, "Failed to increase RLIMIT_MEMLOCK limit! (hint: run as root)\n");
+		fprintf(stderr,
+			"Failed to increase RLIMIT_MEMLOCK limit! (hint: run as root)\n");
 		return false;
 	}
 	return true;
@@ -61,19 +65,30 @@ static bool ubpf_rlimit(void)
 static bool setup()
 {
 	// Set up libbpf errors and debug info callback
-	libbpf_set_print(ubpf_print);
+	libbpf_set_print(print);
 
 	// Bump RLIMIT_MEMLOCK to allow BPF sub-system to do anything
-	if (!ubpf_rlimit()) {
+	if (!rlimit()) {
 		return false;
 	};
 
 	// Setup signal handler so we exit cleanly
-	if (!ubpf_sighandler()) {
+	if (!sighandler()) {
 		return false;
 	}
 
 	return true;
 }
 
-#endif /* __UHELPERS_H */
+static int attach_prog(struct bpf_program *prog, const char *name)
+{
+	if (!prog)
+		return 0;
+	if (!bpf_program__attach(prog)) {
+		fprintf(stderr, "Failed to attach %s\n", name);
+		return -1;
+	}
+	return 0;
+}
+
+#endif /* __USER_HELPERS_H_ */

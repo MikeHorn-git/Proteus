@@ -17,8 +17,7 @@ VMLINUX := ../vmlinux.h/include/$(ARCH)/vmlinux.h
 # Use our own libbpf API headers and Linux UAPI headers distributed with
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
-INCLUDES := -I$(OUTPUT) -I../libbpf/include/uapi -I$(dir $(VMLINUX))
-CFLAGS := -g -Wall
+INCLUDES := -I$(OUTPUT) -I../libbpf/include/uapi -I$(dir $(VMLINUX)) -I./bpf -I./common
 ALL_LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 
 APPS = proteus

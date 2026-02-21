@@ -3,22 +3,24 @@
 
 #include "vmlinux.h"
 #include "helpers.h"
+#include "logs.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
 
 /* ---- Fentry ---- */
 
 SEC("fentry/__x64_sys_bpf")
-int BPF_PROG(bpf_fentry)
+int BPF_PROG(bpf__fentry, enum bpf_cmd cmd, union bpf_attr *attr,
+	     unsigned int size)
 {
-	long ret = 0;
-	size_t pid_tgid = bpf_get_current_pid_tgid();
-	int pid = pid_tgid >> 32;
+	__u32 pid = bpf_get_current_pid_tgid() >> 32;
+	if (!__filter_pid())
+		return 0;
 
 	// Log trace_pipe
 	bpf_printk("[+] Bpf: sys_bpf");
 	// Log userland
-	ring_buffer(ret, pid);
+	ring_buffer(pid);
 
 	return 0;
 }
@@ -26,23 +28,18 @@ int BPF_PROG(bpf_fentry)
 /* ---- Kprobe ---- */
 
 SEC("kprobe/__x64_sys_bpf")
-int bpf_prog_kprobe(struct pt_regs *ctx)
+int BPF_KPROBE(kprobe__bpf, enum bpf_cmd cmd, union bpf_attr *attr,
+	       unsigned int size)
 {
-	long ret = 0;
-	size_t pid_tgid = bpf_get_current_pid_tgid();
-	int pid = pid_tgid >> 32;
-
-	// Read syscall args (cmd, attr pointer)
-	// If cmd == BPF_LINK_CREATE && attach_type == BPF_TRACE_FENTRY
-	// then log it
-	int cmd = PT_REGS_PARM1(ctx); // usually ctx->di
-	void *attr = (void *)PT_REGS_PARM2(ctx); // ctx->si
-	unsigned int size = PT_REGS_PARM3(ctx); // ctx->dx
+	__u32 pid = bpf_get_current_pid_tgid() >> 32;
+	if (!__filter_pid())
+		return 0;
 
 	// Log trace_pipe
-	bpf_printk("[+] Bpf: sys_bpf(cmd=%d, attr=%p, size=%u)", cmd, attr, size);
+	bpf_printk("[+] Bpf: sys_bpf(cmd=%d, attr=%p, size=%u)", cmd, attr,
+		   size);
 	// Log userland
-	ring_buffer(ret, pid);
+	ring_buffer(pid);
 
 	return 0;
 }
@@ -50,45 +47,47 @@ int bpf_prog_kprobe(struct pt_regs *ctx)
 /* ---- Tracepoints ---- */
 
 SEC("tp/syscalls/sys_enter_bpf")
-int bpf_dos_bpf_enter(struct trace_event_raw_sys_enter *ctx)
+int BPF_PROG(tp__enter_bpf)
 {
-	long ret = 0;
-	size_t pid_tgid = bpf_get_current_pid_tgid();
-	int pid = pid_tgid >> 32;
+	/*
+   * field:int cmd;	offset:16;	size:8;	signed:0;
+   * field:union bpf_attr * uattr;	offset:24;	size:8;	signed:0;
+   * field:unsigned int size;	offset:32;	size:8;	signed:0;
+   */
+	__u64 cmd = *(__u64 *)((char *)ctx + 16);
+	__u64 attr = *(__u64 *)((char *)ctx + 24);
+	__u64 size = *(__u64 *)((char *)ctx + 32);
 
-	// Filter events
-	u8 flag = 1;
-	u8 *exists = bpf_map_lookup_elem(&pids, &pid);
-	if (exists)
+	__u32 pid = bpf_get_current_pid_tgid() >> 32;
+	if (!__filter_pid())
 		return 0;
-	bpf_map_update_elem(&pids, &pid, &flag, BPF_ANY);
 
 	// Log trace_pipe
-	bpf_printk("[*] bpf_enter: Detected");
+	bpf_printk(
+		"[+] Bpf: bpf_enter(cmd=0x%08lx, uattr=0x%08lx, size=0x%08lx)",
+		cmd, attr, size);
 	// Log event
-	ring_buffer(ret, pid);
+	ring_buffer(pid);
 
 	return 0;
 }
 
 SEC("tp/syscalls/sys_exit_bpf")
-int bpf_dos_bpf_exit(struct trace_event_raw_sys_enter *ctx)
+int BPF_PROG(tp__exit_bpf)
 {
-	long ret = 0;
-	size_t pid_tgid = bpf_get_current_pid_tgid();
-	int pid = pid_tgid >> 32;
+	/*
+   * field:long ret;	offset:16;	size:8;	signed:1;
+   */
+	__u64 ret = *(__u64 *)((char *)ctx + 16);
 
-	// Filter events
-	u8 flag = 1;
-	u8 *exists = bpf_map_lookup_elem(&pids, &pid);
-	if (exists)
+	__u32 pid = bpf_get_current_pid_tgid() >> 32;
+	if (!__filter_pid())
 		return 0;
-	bpf_map_update_elem(&pids, &pid, &flag, BPF_ANY);
 
 	// Log trace_pipe
-	bpf_printk("[*] bpf_exit: Detected");
+	bpf_printk("[+] Bpf: bpf_exit(ret=0x%lx)", ret);
 	// Log event
-	ring_buffer(ret, pid);
+	ring_buffer(pid);
 
 	return 0;
 }

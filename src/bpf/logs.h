@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
 /* https://github.com/pathtofile/bad-bpf/blob/main/src/common_um.h */
-#ifndef __KHELPERS_H
-#define __KHELPERS_H
+#ifndef __BPF_LOGS_H_
+#define __BPF_LOGS_H_
 
 #include "proteus.h"
 
-#define EPERM	  1 /* Operation not permitted */
-#define EACCES	  13 /* Permission denied */
+#define EPERM 1 /* Operation not permitted */
+#define EACCES 13 /* Permission denied */
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 struct {
@@ -14,9 +14,9 @@ struct {
 	__uint(max_entries, 256 * 1024);
 } rb SEC(".maps");
 
-// Log kernel land
-static __always_inline int ring_buffer(long ret, int pid)
+static __always_inline int ring_buffer(int pid)
 {
+	long ret;
 	struct event *e;
 	e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
 	if (e) {
@@ -29,4 +29,4 @@ static __always_inline int ring_buffer(long ret, int pid)
 	return 0;
 }
 
-#endif /* __KHELPERS_H */
+#endif /* __BPF_LOGS_H_ */

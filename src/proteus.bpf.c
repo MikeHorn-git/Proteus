@@ -4,7 +4,8 @@
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_tracing.h>
 
-#include "include/khelpers.h"
+#include "bpf/helpers.h"
+#include "bpf/logs.h"
 
 #include "bpf/bpf.h"
 #include "bpf/lkm.h"

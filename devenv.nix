@@ -26,7 +26,7 @@
     clean.exec = "make clean";
     lint.exec = ''
       checkmake src/Makefile
-      git ls-files --cached --others --exclude-standard -- \
+      git ls-files --exclude-standard -- \
       '*.c' '*.h' ':(exclude)vmlinux.h' | xargs clang-format -i
       mdformat README.md
       nixfmt devenv.nix'';

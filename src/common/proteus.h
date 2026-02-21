@@ -2,12 +2,13 @@
 #ifndef __PROTEUS_H
 #define __PROTEUS_H
 
-#define FILENAME_LEN  256
+#define FILENAME_LEN 256
 #define TASK_COMM_LEN 16
 
 struct env {
 	bool fentry;
 	bool kprobe;
+	bool lsm;
 	bool tracepoints;
 	bool verbose;
 };
