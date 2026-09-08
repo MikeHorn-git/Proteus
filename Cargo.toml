@@ -1,0 +1,19 @@
+[package]
+name = "Proteus"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+tui = ["libafl/tui_monitor"]
+
+[dependencies]
+libafl = { version = "0.16.1", features = ["intel_pt"] }
+libafl_bolts = "0.16.1"
+fast_rands = "0.16.1"
+rbpf = "0.4.1"
+proc-maps = "0.5.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
+debug = true
